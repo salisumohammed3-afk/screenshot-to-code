@@ -28,14 +28,6 @@ function UrlTab({ doCreate, screenshotOneApiKey, stack, setStack }: Props) {
   async function takeScreenshot() {
     const trimmedReferenceUrl = referenceUrl.trim();
 
-    if (!screenshotOneApiKey) {
-      toast.error(
-        "Please add a ScreenshotOne API key in Settings. You can also upload screenshots directly in the Upload tab.",
-        { duration: 6000 },
-      );
-      return;
-    }
-
     if (!trimmedReferenceUrl) {
       toast.error("Please enter a URL");
       return;
@@ -169,7 +161,7 @@ function UrlTab({ doCreate, screenshotOneApiKey, stack, setStack }: Props) {
           </div>
 
           <p className="text-xs text-gray-400 dark:text-zinc-500 text-center">
-            Requires ScreenshotOne API key.
+            Screenshots powered by microlink.io. Add a ScreenshotOne API key in Settings for higher limits.
           </p>
         </div>
       </div>

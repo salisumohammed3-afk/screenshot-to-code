@@ -1,6 +1,7 @@
 import base64
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+from typing import Optional
 import httpx
 from urllib.parse import urlparse
 
@@ -42,7 +43,7 @@ def bytes_to_data_url(image_bytes: bytes, mime_type: str) -> str:
     return f"data:{mime_type};base64,{base64_image}"
 
 
-async def capture_screenshot(
+async def capture_screenshot_screenshotone(
     target_url: str, api_key: str, device: str = "desktop"
 ) -> bytes:
     api_base_url = "https://api.screenshotone.com/take"
@@ -73,9 +74,59 @@ async def capture_screenshot(
             raise Exception("Error taking screenshot")
 
 
+async def capture_screenshot_microlink(
+    target_url: str, device: str = "desktop"
+) -> bytes:
+    """Free screenshot service via microlink.io — no API key required."""
+    params = {
+        "url": target_url,
+        "screenshot": "true",
+        "meta": "false",
+        "embed": "screenshot.url",
+    }
+
+    if device == "mobile":
+        params["viewport.width"] = "375"
+        params["viewport.height"] = "812"
+    else:
+        params["viewport.width"] = "1280"
+        params["viewport.height"] = "832"
+
+    async with httpx.AsyncClient(timeout=60) as client:
+        # First call: get the screenshot URL from the JSON response
+        json_response = await client.get(
+            "https://api.microlink.io/", params=params
+        )
+        if json_response.status_code != 200:
+            raise Exception("Error taking screenshot via microlink.io")
+
+        data = json_response.json()
+        screenshot_url = (
+            data.get("data", {}).get("screenshot", {}).get("url")
+        )
+        if not screenshot_url:
+            raise Exception("No screenshot URL returned by microlink.io")
+
+        # Second call: download the actual image bytes
+        img_response = await client.get(screenshot_url)
+        if img_response.status_code == 200 and img_response.content:
+            return img_response.content
+        else:
+            raise Exception("Failed to download screenshot image")
+
+
+async def capture_screenshot(
+    target_url: str, api_key: str, device: str = "desktop"
+) -> bytes:
+    if api_key:
+        return await capture_screenshot_screenshotone(target_url, api_key, device)
+    else:
+        return await capture_screenshot_microlink(target_url, device)
+
+
 class ScreenshotRequest(BaseModel):
     url: str
-    apiKey: str
+    apiKey: Optional[str] = None
 
 
 class ScreenshotResponse(BaseModel):
