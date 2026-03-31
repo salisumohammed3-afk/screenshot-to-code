@@ -82,7 +82,6 @@ async def capture_screenshot_microlink(
         "url": target_url,
         "screenshot": "true",
         "meta": "false",
-        "embed": "screenshot.url",
     }
 
     if device == "mobile":
