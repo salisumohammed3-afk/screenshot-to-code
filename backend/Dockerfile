@@ -19,3 +19,6 @@ RUN poetry install
 
 # Copy the current directory contents into the container at /app
 COPY ./ /app/
+
+# Start the uvicorn server, binding to Railway's $PORT
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-7001}"]
